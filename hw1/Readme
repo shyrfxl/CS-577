@@ -1,0 +1,76 @@
+					CS 577 Cybersecurity Lab
+						Lab-1
+	Team Members:- 1. Gaurav Sharma(gsharma1@stevens.edu) and 2. Hongyi Su (hsu4@stevens.edu)
+
+*We have attached Mim_Proxy file which is MiTM proxy program and HMAC.c file which implements HMAC using SHA-1
+
+
+Exercise 1.) Man-in-middle Attack
+
+a) The value of e printed out is 65537 (0x10001). When generating bigger keys we noticed that system is taking more time to generate it.
+
+b) Information entered while creating a certificate servers the purpose of identifying that to which entity or party certificate belongs and
+ anyone which wants to communicate with the party can varify the information provided in the certificate. On the other hand information in the certificate also helps the party to which it belongs in a way to make their own unique identity so that any adversary can not impersonate them. 
+
+c) In safe communication client has the server certificate and verifies it.
+
+d) In unsafe communication client does not verifies the certificate correctly and starts communicating with the un-verified server.
+
+e) We have created a man-in-the-middle proxy that logs all traffic between client and server to client.log and server.log
+We have submitted Mim_Proxy file which is our proxy program written in python. A usage example is below.
+
+Usage Example:
+
+ ./Mim_Proxy --listen 127.0.0.1:12349 --connect 127.0.0.1:54321 --cert cacert.pem --key private.pem
+
+f) Yes, adding back -verify_return_error will prevent the man in the middle attack. For instance if server is starting with a set of keys different than the proxy which has its own malicious self signed certificate. So when client want to communicate with the server and didn't have the -verify_return_error option than man in the middle attack is possible otherwise it will give the return error.
+
+Example:- If client uses -verify_return_error than it will give the following error and will prevent the attack:-
+
+$ openssl s_client -connect localhost:12349 -state -verify 1 -CAfile cert -verify_return_error
+
+verify depth is 1
+CONNECTED(00000003)
+SSL_connect:before/connect initialization
+SSL_connect:unknown state
+SSL_connect:SSLv3 read server hello A
+depth=0 C = fd, ST = gb, L = bew, O = e, OU = f, CN = f
+verify error:num=18:self signed certificate
+verify return:0
+SSL3 alert write:fatal:unknown CA
+SSL_connect:error in SSLv3 read server certificate B
+SSL_connect:error in SSLv3 read server certificate B
+140044811536064:error:14090086:SSL routines:SSL3_GET_SERVER_CERTIFICATE:certificate verify failed:s3_clnt.c:1166:
+---
+no peer certificate available
+---
+No client certificate CA names sent
+---
+SSL handshake has read 563 bytes and written 7 bytes
+---
+New, (NONE), Cipher is (NONE)
+Secure Renegotiation IS supported
+Compression: NONE
+Expansion: NONE
+SSL-Session:
+    Protocol  : TLSv1.1
+    Cipher    : 0000
+    Session-ID: 
+    Session-ID-ctx: 
+    Master-Key: 
+    Key-Arg   : None
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    Start Time: 1410454268
+    Timeout   : 300 (sec)
+    Verify return code: 0 (ok)
+---
+
+
+Excercise 2.)
+
+We have attached HMAC.c file which implements HMAC codes using SHA-1
+
+* we have also varified our result with this command:- cat filename | openssl dgst -sha1 -hmac key
+

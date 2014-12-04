@@ -1,0 +1,113 @@
+#!/usr/bin/python
+
+# Filename: Mim_Proxy
+# Implementation of man in the middle proxy.
+# Author : Hongyi Su and Gaurav Sharma
+
+
+import socket
+import sys,os,getopt
+from thread import *
+from OpenSSL import SSL
+import optparse
+Client_IP = ''
+Server_Ip = ''
+CAcert = "cert"
+Keyfile = "key"
+C_ip = [0]*2
+S_ip = [0]*2
+Server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+# This function performs two tasks:
+# 1.logs recieving data from client to client.log file  
+# 2. sends data to the server 
+
+def connectclientthread():
+	print 'client connectting\n'
+	connection.send('Welcome!!!\n Type something and hit enter.\n')
+	while 1:
+		data = connection.recv(65535)
+		print data
+		with open('client.log', 'a') as f:
+			f.write(data)
+		ssl.write(data)
+	connection.close()
+
+# This function performs three tasks:
+# 1. Connects to the server
+# 2. logs data coming from the server
+# 3. Sends data to the client
+
+def connectToServer():
+	HOST = S_ip[0]
+	PORT = int(S_ip[1])
+	Server.connect((HOST, PORT))
+	global ssl
+	ssl = socket.ssl(Server)
+	ssl.write('Hello secure socket.\n')
+	while 1:
+		buf = ssl.read(65536)
+		print buf
+		with open('server.log','a') as f:
+			f.write(buf)		
+		connection.send(buf)
+
+def main():
+	global Client_IP,Server_Ip,CAcert,Keyfile,C_ip,S_ip
+	try:
+		opts,args = getopt.getopt(sys.argv[1:],"",["listen=","connect=","cert=","key="])
+		for op,value in opts:
+			if op == "--listen":
+				#print "11"
+				Client_IP = value
+				#print Client_IP
+			elif op == "--connect":
+				Server_Ip = value
+			elif op == "--cert":
+				CAcert = value
+			elif op == "--key":
+				Keyfile = value
+        except getopt.GetoptError:
+		print "parameter Error!\n"
+	if not Client_IP.strip():
+		print "Usage Example:\n\n ./Mim_Proxy --listen 127.0.0.1:12349 --connect 127.0.0.1:54321 --cert cacert.pem --key private.pem\n"
+		sys.exit(1)
+	else:
+		C_ip = Client_IP.split(':')
+		#print C_ip
+	if not Server_Ip.strip():
+		print "Usage Example:\n\n ./Mim_Proxy --listen 127.0.0.1:12349 --connect 127.0.0.1:54321 --cert cacert.pem --key private.pem\n"
+		sys.exit(1)
+	else:
+		S_ip = Server_Ip.split(':')
+		#print S_ip
+	if (Client_IP == None) | (Server_Ip == None)| (CAcert == None) | (Keyfile == None):
+		print "Usage Example:\n\n ./Mim_Proxy --listen 127.0.0.1:12349 --connect 127.0.0.1:54321 --cert cacert.pem --key private.pem\n"
+		sys.exit(1)
+###########################################################################
+if __name__== '__main__':
+	main()
+	context = SSL.Context(SSL.SSLv23_METHOD)
+	context.use_privatekey_file(Keyfile)
+	context.use_certificate_file(CAcert)
+	client = SSL.Connection(context, client)
+	HOST = C_ip[0]
+	PORT = int(C_ip[1])
+ 	#print HOST
+	#print PORT
+	print 'Socket created'
+	try:
+		client.bind((HOST,PORT))
+	except socket.error, msg:
+		print 'Bind failed. Error Code : ' + str(msg[0])+ ' Message ' + msg[1]
+		sys.exit()
+	print 'Socket bind complete'
+	client.listen(5)
+	print 'Socket now listening'
+	while 1:
+		connection, address = client.accept()
+                print 'Connected with ' + address[0]
+		start_new_thread(connectToServer,())
+		start_new_thread(connectclientthread,())
